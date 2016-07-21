@@ -4,10 +4,13 @@ import java.io.IOException;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
+import org.apache.cordova.PluginResult;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import android.Manifest;
 import android.util.Log;
+import android.content.pm.PackageManager;
 import com.zebra.android.discovery.*;
 import com.zebra.sdk.comm.*;
 import com.zebra.sdk.printer.*;
@@ -15,13 +18,19 @@ import com.zebra.sdk.printer.*;
 public class ZebraBluetoothPrinter extends CordovaPlugin {
 
     private static final String LOG_TAG = "ZebraBluetoothPrinter";
-    //String mac = "AC:3F:A4:1D:7A:5C";
+    private final String REQUEST_ACCESS_COARSE_LOCATION = Manifest.permission.ACCESS_COARSE_LOCATION;
+    public static final int FIND_REQ_CODE = 0;
+    public static final int PERMISSION_DENIED_ERROR = 20;
+    private CallbackContext callbackContext;
 
     public ZebraBluetoothPrinter() {
+
     }
 
-    @ Override
+
+    @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
+        this.callbackContext = callbackContext;
 
         if (action.equals("print")) {
             try {
@@ -34,25 +43,57 @@ public class ZebraBluetoothPrinter extends CordovaPlugin {
             }
             return true;
         }
+
         if (action.equals("find")) {
-            try {
-                findPrinter(callbackContext);
-            } catch (Exception e) {
-                Log.e(LOG_TAG, e.getMessage());
-                e.printStackTrace();
-            }
-            return true;
+          if(hasPermission())
+          {
+              try {
+                  findPrinter();
+              } catch (Exception e) {
+                  Log.e(LOG_TAG, "An error occured: \n" + e.getMessage());
+                  e.printStackTrace();
+              }
+              return true;
+          } else {
+              requestPermission();
+          }
+        }
+        else {
+            Log.e(LOG_TAG, "permission not found: " + android.Manifest.permission.ACCESS_COARSE_LOCATION);
         }
         return false;
     }
-    /**
-     * this returns an JSON-Array of all found devices in the form:
-     * [
-     *   {address:"AC:3F:A4:1D:7A:5C", friendlyName: "My Zebra Device"},
-     *   ...
-     * ]
-     */
-    public void findPrinter(final CallbackContext callbackContext) {
+
+    private boolean hasPermission() {
+    		return cordova.hasPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION);
+    }
+
+    private void requestPermission() {
+    		cordova.requestPermission(this, FIND_REQ_CODE, android.Manifest.permission.ACCESS_COARSE_LOCATION);
+    }
+
+    public void onRequestPermissionResult(int requestCode, String[] permissions, int[] grantResults) throws JSONException {
+    		for (int r : grantResults) {
+    			if (r == PackageManager.PERMISSION_DENIED) {
+    				callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, "User has denied permission"));
+    				return;
+    			}
+    		}
+    		try{
+    		  findPrinter();
+    		} catch(Exception e) {
+
+    		}
+
+    }
+
+
+    protected void getReadPermission(int requestCode)
+    {
+        cordova.requestPermission(this, requestCode, android.Manifest.permission.ACCESS_COARSE_LOCATION);
+    }
+
+    public void findPrinter() {
       try {
           BluetoothDiscoverer.findPrinters(this.cordova.getActivity().getApplicationContext(), new DiscoveryHandler() {
               JSONArray discoveredDevices = new JSONArray();
@@ -77,9 +118,9 @@ public class ZebraBluetoothPrinter extends CordovaPlugin {
 
               public void discoveryError(String message) {
                   //Error during discovery
-                  callbackContext.error(message);
+                  callbackContext.error("Unable to fulfill your request: " + message);
               }
-          });
+        });
       } catch (Exception e) {
           e.printStackTrace();
       }
@@ -144,5 +185,4 @@ public class ZebraBluetoothPrinter extends CordovaPlugin {
         return isOK;
     }
 }
-
 
