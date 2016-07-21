@@ -18,7 +18,7 @@ cordova.plugins.zbtprinter.find(function(mac) {
 this will return you a JSON Array in form of:
 ```
 [
-   {address:mac-address, friendlyName: friendly-name},
+   {address:"AC:3F:A4:1D:7A:5C", friendlyName: "My Zebra Device"},
    ...
 ]
 ```
