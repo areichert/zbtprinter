@@ -1,4 +1,4 @@
-package com.github.michael79bxl.zbtprinter;
+package com.github.areichert.zbtprinter;
 
 import java.io.IOException;
 
