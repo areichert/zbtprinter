@@ -15,6 +15,11 @@ cordova.plugins.zbtprinter.find(function(mac) {
     }
 );
 ```
+this will return you a JSON Array in form of:
+[
+   {address:<mac-address>, friendlyName: <friendly-name>},
+   ...
+]
 
 You can send data in ZPL Zebra Programing Language:
 
