@@ -6,6 +6,7 @@ import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 import android.util.Log;
 import com.zebra.android.discovery.*;
 import com.zebra.sdk.comm.*;
@@ -19,7 +20,7 @@ public class ZebraBluetoothPrinter extends CordovaPlugin {
     public ZebraBluetoothPrinter() {
     }
 
-    @Override
+    @ Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
 
         if (action.equals("print")) {
@@ -44,19 +45,34 @@ public class ZebraBluetoothPrinter extends CordovaPlugin {
         }
         return false;
     }
-    
+    /**
+     * this returns an JSON-Array of all found devices in the form:
+     * [
+     *   {address:"AC:3F:A4:1D:7A:5C", friendlyName: "My Zebra Device"},
+     *   ...
+     * ]
+     */
     public void findPrinter(final CallbackContext callbackContext) {
       try {
           BluetoothDiscoverer.findPrinters(this.cordova.getActivity().getApplicationContext(), new DiscoveryHandler() {
+              JSONArray discoveredDevices = new JSONArray();
 
               public void foundPrinter(DiscoveredPrinter printer) {
-                  String macAddress = printer.address;
                   //I found a printer! I can use the properties of a Discovered printer (address) to make a Bluetooth Connection
-                  callbackContext.success(macAddress);
+                  if(printer instanceof DiscoveredPrinterBluetooth) {
+                    JSONObject printerObj = new JSONObject();
+                    try {
+                      printerObj.put("address", printer.address);
+                      printerObj.put("friendlyName", ((DiscoveredPrinterBluetooth) printer).friendlyName);
+                      discoveredDevices.put(printerObj);
+                    } catch (JSONException e) {
+                    }
+                  }
               }
 
               public void discoveryFinished() {
                   //Discovery is done
+                  callbackContext.success(discoveredDevices);
               }
 
               public void discoveryError(String message) {
@@ -66,7 +82,7 @@ public class ZebraBluetoothPrinter extends CordovaPlugin {
           });
       } catch (Exception e) {
           e.printStackTrace();
-      }      
+      }
     }
 
     /*
@@ -128,4 +144,5 @@ public class ZebraBluetoothPrinter extends CordovaPlugin {
         return isOK;
     }
 }
+
 
