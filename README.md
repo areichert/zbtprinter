@@ -38,15 +38,8 @@ cordova.plugins.zbtprinter.print("AC:3F:A4:1D:7A:5C", "! U1 setvar "device.langu
 ###Cordova
 
 ```
-cordova plugin add https://github.com/michael79bxl/zbtprinter.git
+cordova plugin add https://github.com/areichert/zbtprinter.git
 ```
-
-###Phonegap build
-
-```
-<gap:plugin name="cordova-plugin-zbtprinter" source="npm" />
-```
-
 
 ##ZPL - Zebra Programming Language
 For more information about ZPL please see the  [PDF Official Manual](https://support.zebra.com/cpws/docs/zpl/zpl_manual.pdf)
